@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { FileUploadView } from './views/FileUploadView';
+import { HomePage } from './views/HomePage';
 
 function App() {
   return (
@@ -7,7 +7,7 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={<FileUploadView />}
+          element={<HomePage />}
         />
       </Routes>
     </BrowserRouter>

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-export function FileUploadView() {
+export function HomePage() {
+  const [allPokemons, setAllPokemons] = useState([]);
   const [pokemons, setPokemons] = useState([]);
   const [filterName, setFilterName] = useState('');
   const [filterType, setFilterType] = useState('');
@@ -13,6 +14,8 @@ export function FileUploadView() {
     const fetchPokemons = async () => {
       try {
         const response = await axios.get('http://192.168.1.171:3003/pokemon');
+        console.log('API Response:', response.data); // Debug: Log the API response
+        setAllPokemons(response.data);
         setPokemons(response.data);
         setLoading(false);
       } catch (err) {
@@ -23,35 +26,99 @@ export function FileUploadView() {
     fetchPokemons();
   }, []);
 
+  // Filter Pokémon by name
+  const handleFilterName = (name: string) => {
+    setFilterName(name);
+    let filteredPokemons = allPokemons;
+
+    // Apply name filter
+    if (name.trim() !== '') {
+      filteredPokemons = filteredPokemons.filter((pokemon: any) =>
+        pokemon.name.toLowerCase().includes(name.toLowerCase())
+      );
+    }
+
+    // Apply type filter if active
+    if (filterType.trim() !== '') {
+      filteredPokemons = filteredPokemons.filter(
+        (pokemon: any) =>
+          (pokemon.fk_tipo_primario &&
+            pokemon.fk_tipo_primario.toLowerCase() ===
+              filterType.toLowerCase()) ||
+          (pokemon.fk_tipo_secundario &&
+            pokemon.fk_tipo_secundario.toLowerCase() ===
+              filterType.toLowerCase())
+      );
+    }
+
+    setPokemons(filteredPokemons);
+  };
+
+  // Filter Pokémon by type
+  const handleFilterType = (type: string) => {
+    setFilterType(type);
+    let filteredPokemons = allPokemons;
+
+    // Apply name filter if active
+    if (filterName.trim() !== '') {
+      filteredPokemons = filteredPokemons.filter((pokemon: any) =>
+        pokemon.name.toLowerCase().includes(filterName.toLowerCase())
+      );
+    }
+
+    // Apply type filter
+    if (type.trim() === '') {
+      setPokemons(filteredPokemons); // Show all Pokémon (or name-filtered) if type is "Todos os tipos"
+    } else {
+      filteredPokemons = filteredPokemons.filter(
+        (pokemon: any) =>
+          (pokemon.fk_tipo_primario &&
+            pokemon.fk_tipo_primario.toLowerCase() === type.toLowerCase()) ||
+          (pokemon.fk_tipo_secundario &&
+            pokemon.fk_tipo_secundario.toLowerCase() === type.toLowerCase())
+      );
+      setPokemons(filteredPokemons);
+    }
+  };
+
   // Função para deletar um Pokémon
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: number) => {
     try {
       await axios.delete(`http://192.168.1.171:3003/pokemon/${id}`);
-      setPokemons(pokemons.filter((pokemon) => pokemon.id !== id));
+      setAllPokemons(allPokemons.filter((pokemon: any) => pokemon.id !== id));
+      setPokemons(pokemons.filter((pokemon: any) => pokemon.id !== id));
       alert('Pokémon deletado com sucesso!');
     } catch (err) {
       alert('Erro ao deletar Pokémon');
     }
   };
 
-  // Função para editar um Pokémon (exemplo simples, abre um prompt para edição)
-  const handleEdit = async (pokemon) => {
+  // Função para editar um Pokémon
+  const handleEdit = async (pokemon: any) => {
     const newName = prompt('Novo nome:', pokemon.name);
-    const newType1 = prompt('Novo tipo 1:', pokemon.type1);
-    const newType2 = prompt('Novo tipo 2 (opcional):', pokemon.type2 || '');
+    const newType1 = prompt('Novo tipo 1:', pokemon.fk_tipo_primario);
+    const newType2 = prompt(
+      'Novo tipo 2 (opcional):',
+      pokemon.fk_tipo_secundario || ''
+    );
     if (newName && newType1) {
       try {
         const updatedPokemon = {
           name: newName,
-          type1: newType1,
-          type2: newType2 || null,
+          fk_tipo_primario: newType1,
+          fk_tipo_secundario: newType2 || null,
         };
         await axios.put(
           `http://192.168.1.171:3003/pokemon/${pokemon.id}`,
           updatedPokemon
         );
+        setAllPokemons(
+          allPokemons.map((p: any) =>
+            p.id === pokemon.id ? { ...p, ...updatedPokemon } : p
+          )
+        );
         setPokemons(
-          pokemons.map((p) =>
+          pokemons.map((p: any) =>
             p.id === pokemon.id ? { ...p, ...updatedPokemon } : p
           )
         );
@@ -61,17 +128,6 @@ export function FileUploadView() {
       }
     }
   };
-
-  // Filtra os Pokémon com base nos inputs
-  const filteredPokemons = pokemons.filter((pokemon) => {
-    const matchesName = pokemon.name
-      .toLowerCase()
-      .includes(filterName.toLowerCase());
-    const matchesType = filterType
-      ? pokemon.type1 === filterType || pokemon.type2 === filterType
-      : true;
-    return matchesName && matchesType;
-  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-600 flex flex-col items-center justify-center">
@@ -87,25 +143,27 @@ export function FileUploadView() {
         )}
 
         <div className="space-y-6">
-          <div className="p-6 text-center space-y-4 ">
-            <div className="flex flex-col space-y-4  items-center">
-              <button
-                className={`max-w-md py-3 px-4 font-roboto rounded-md text-blue bg-gray-400`}
-              >
+          <div className="p-6 text-center space-y-4">
+            <div className="flex flex-col space-y-4 items-center">
+              <button className="max-w-md py-3 px-4 font-roboto rounded-md text-blue bg-gray-400">
                 Adicionar Pokemon
               </button>
-              <button
-                className={`max-w-md py-3 px-4 font-roboto rounded-md text-blue bg-gray-400 hover:blue-500`}
-              >
+              <button className="max-w-md py-3 px-4 font-roboto rounded-md text-blue bg-gray-400 hover:bg-blue-500">
                 Gerenciar Tipo
               </button>
             </div>
             <div className="flex gap-4 justify-center py-4">
               <input
-                className=" max-w-sm flex-1 p-2 text-lg border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="max-w-sm flex-1 p-2 text-lg border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                 placeholder="Filtre aqui a lista de Pokemons"
+                value={filterName}
+                onChange={(e) => handleFilterName(e.target.value)}
               />
-              <select className="max-w-sm flex-1 p-2 text-lg border rounded-md">
+              <select
+                className="max-w-sm flex-1 p-2 text-lg border rounded-md"
+                value={filterType}
+                onChange={(e) => handleFilterType(e.target.value)}
+              >
                 <option value="">Todos os tipos</option>
                 <option value="grass">Grass</option>
                 <option value="poison">Poison</option>
@@ -152,7 +210,7 @@ export function FileUploadView() {
                   {loading ? (
                     <tr>
                       <td
-                        colSpan="5"
+                        colSpan={5}
                         className="border border-gray-300 p-2 text-center"
                       >
                         Carregando...
@@ -161,14 +219,14 @@ export function FileUploadView() {
                   ) : error ? (
                     <tr>
                       <td
-                        colSpan="5"
+                        colSpan={5}
                         className="border border-gray-300 p-2 text-center"
                       >
                         {error}
                       </td>
                     </tr>
-                  ) : filteredPokemons.length > 0 ? (
-                    filteredPokemons.map((pokemon) => (
+                  ) : pokemons.length > 0 ? (
+                    pokemons.map((pokemon: any) => (
                       <tr
                         key={pokemon.id}
                         className="hover:bg-gray-50"
@@ -206,7 +264,7 @@ export function FileUploadView() {
                   ) : (
                     <tr>
                       <td
-                        colSpan="5"
+                        colSpan={5}
                         className="border border-gray-300 p-2 text-center"
                       >
                         Nenhum Pokémon encontrado
