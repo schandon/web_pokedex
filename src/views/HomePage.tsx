@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 export function HomePage() {
   const [allPokemons, setAllPokemons] = useState([]);
@@ -8,6 +9,7 @@ export function HomePage() {
   const [filterType, setFilterType] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   // Busca os dados do backend
   useEffect(() => {
@@ -19,14 +21,22 @@ export function HomePage() {
         setPokemons(response.data);
         setLoading(false);
       } catch (err) {
-        setError('Erro ao carregar os Pokémon');
+        setError('Erro ao carregar os pokemon');
         setLoading(false);
       }
     };
     fetchPokemons();
   }, []);
 
-  // Filter Pokémon by name
+  const handleAddPokemon = () => {
+    navigate('/pokemon');
+  };
+
+  const handleAddType = () => {
+    navigate('/type');
+  };
+
+  // Filter pokemon by name
   const handleFilterName = (name: string) => {
     setFilterName(name);
     let filteredPokemons = allPokemons;
@@ -54,7 +64,7 @@ export function HomePage() {
     setPokemons(filteredPokemons);
   };
 
-  // Filter Pokémon by type
+  // Filter pokemon by type
   const handleFilterType = (type: string) => {
     setFilterType(type);
     let filteredPokemons = allPokemons;
@@ -68,7 +78,7 @@ export function HomePage() {
 
     // Apply type filter
     if (type.trim() === '') {
-      setPokemons(filteredPokemons); // Show all Pokémon (or name-filtered) if type is "Todos os tipos"
+      setPokemons(filteredPokemons); // Show all pokemon (or name-filtered) if type is "Todos os tipos"
     } else {
       filteredPokemons = filteredPokemons.filter(
         (pokemon: any) =>
@@ -81,19 +91,19 @@ export function HomePage() {
     }
   };
 
-  // Função para deletar um Pokémon
+  // Função para deletar um pokemon
   const handleDelete = async (id: number) => {
     try {
       await axios.delete(`http://192.168.1.171:3003/pokemon/${id}`);
       setAllPokemons(allPokemons.filter((pokemon: any) => pokemon.id !== id));
       setPokemons(pokemons.filter((pokemon: any) => pokemon.id !== id));
-      alert('Pokémon deletado com sucesso!');
+      alert('pokemon deletado com sucesso!');
     } catch (err) {
-      alert('Erro ao deletar Pokémon');
+      alert('Erro ao deletar pokemon');
     }
   };
 
-  // Função para editar um Pokémon
+  // Função para editar um pokemon
   const handleEdit = async (pokemon: any) => {
     const newName = prompt('Novo nome:', pokemon.name);
     const newType1 = prompt('Novo tipo 1:', pokemon.fk_tipo_primario);
@@ -122,9 +132,9 @@ export function HomePage() {
             p.id === pokemon.id ? { ...p, ...updatedPokemon } : p
           )
         );
-        alert('Pokémon atualizado com sucesso!');
+        alert('pokemon atualizado com sucesso!');
       } catch (err) {
-        alert('Erro ao atualizar Pokémon');
+        alert('Erro ao atualizar pokemon');
       }
     }
   };
@@ -133,7 +143,7 @@ export function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-600 flex flex-col items-center justify-center">
       <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-7xl">
         <h1 className="font-Roboto font-bold text-2xl text-center text-gray-800 mb-8">
-          Pokedex - Informations
+          Pokedex - Schandon
         </h1>
 
         {error && (
@@ -145,10 +155,16 @@ export function HomePage() {
         <div className="space-y-6">
           <div className="p-6 text-center space-y-4">
             <div className="flex flex-col space-y-4 items-center">
-              <button className="max-w-md py-3 px-4 font-roboto rounded-md text-blue bg-gray-400">
+              <button
+                className="max-w-md py-3 px-4 font-roboto rounded-md text-blue bg-gray-400"
+                onClick={handleAddPokemon}
+              >
                 Adicionar Pokemon
               </button>
-              <button className="max-w-md py-3 px-4 font-roboto rounded-md text-blue bg-gray-400 hover:bg-blue-500">
+              <button
+                className="max-w-md py-3 px-4 font-roboto rounded-md text-blue bg-gray-400 hover:bg-blue-500"
+                onClick={handleAddType}
+              >
                 Gerenciar Tipo
               </button>
             </div>
@@ -184,7 +200,6 @@ export function HomePage() {
                 <option value="dragon">Dragon</option>
               </select>
             </div>
-            {/* Tabela */}
             <div className="overflow-x-auto">
               <table className="min-w-full border-collapse border border-gray-300">
                 <thead>
@@ -267,7 +282,7 @@ export function HomePage() {
                         colSpan={5}
                         className="border border-gray-300 p-2 text-center"
                       >
-                        Nenhum Pokémon encontrado
+                        Nenhum pokemon encontrado
                       </td>
                     </tr>
                   )}
